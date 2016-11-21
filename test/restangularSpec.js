@@ -43,11 +43,11 @@ describe('Restangular', function() {
     $httpBackend.when('OPTIONS', '/accounts').respond();
 
     $httpBackend.whenGET('/accounts').respond(accountsModel);
-    $httpBackend.whenGET('/accounts/do-something').respond(accountsDoSomethingModel);
+    $httpBackend.whenGET('/accounts/do-something?param=value').respond(accountsDoSomethingModel);
     $httpBackend.whenJSONP('/accounts').respond(accountsModel);
     $httpBackend.whenGET('/accounts/0,1').respond(accountsModel);
-    $httpBackend.whenGET('/accounts/messages').respond(messages);
-    $httpBackend.whenGET('/accounts/1/message').respond(messages[0]);
+    $httpBackend.whenGET('/accounts/messages?param=value').respond(messages);
+    $httpBackend.whenGET('/accounts/1/message?param=value').respond(messages[0]);
     $httpBackend.whenGET('/accounts/1/messages').respond(messages);
     $httpBackend.whenGET('/accounts/0').respond(accountsModel[0]);
     $httpBackend.whenGET('/accounts/1').respond(accountsModel[1]);
@@ -565,8 +565,10 @@ describe('Restangular', function() {
     });
 
     it('Custom GET methods should work', function() {
-      restangularAccounts.customGETLIST('messages').then(function(msgs) {
+      restangularAccounts.customGETLIST('messages', { param: "value" }).then(function(msgs) {
         expect(Restangular.stripRestangular(msgs)).toEqual(Restangular.stripRestangular(messages));
+        expect(msgs.getRestangularUrl()).toBe("/accounts/messages");
+        expect(msgs.getRequestedUrl()).toBe("/accounts/messages?param=value");
       });
 
       $httpBackend.flush();
@@ -726,12 +728,15 @@ describe('Restangular', function() {
       Accounts.post(newAccount);
       Accounts.one(0).get();
       Accounts.getList();
-      Accounts.doSomething();
+      Accounts.doSomething({ param: "value" }).then(function(model) {
+        expect(Restangular.stripRestangular(model)).toEqual(Restangular.stripRestangular(accountsDoSomethingModel));
+        expect(model.getRestangularUrl()).toBe("/accounts/do-something");
+        expect(model.getRequestedUrl()).toBe("/accounts/do-something?param=value");
+      });
 
       $httpBackend.expectPOST('/accounts');
       $httpBackend.expectGET('/accounts/0');
       $httpBackend.expectGET('/accounts');
-      $httpBackend.expectGET('/accounts/do-something');
       $httpBackend.flush();
     });
 
@@ -807,8 +812,10 @@ describe('Restangular', function() {
 
 
     it('Custom GET methods should work', function() {
-      restangularAccount1.customGET('message').then(function(msg) {
+      restangularAccount1.customGET('message', { param: "value" }).then(function(msg) {
         expect(Restangular.stripRestangular(msg)).toEqual(Restangular.stripRestangular(messages[0]));
+        expect(msg.getRestangularUrl()).toBe("/accounts/23/message");
+        expect(msg.getRequestedUrl()).toBe("/accounts/23/message?param=value");
       });
 
       $httpBackend.flush();

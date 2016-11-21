@@ -173,6 +173,7 @@ restangular.provider('Restangular', function() {
     config.restangularFields = config.restangularFields || {
       id: 'id',
       route: 'route',
+      custom: 'custom',
       parentResource: 'parentResource',
       restangularCollection: 'restangularCollection',
       cannonicalId: '__cannonicalId',
@@ -693,6 +694,11 @@ restangular.provider('Restangular', function() {
               elemUrl += '/' + (__this.config.encodeIds ? encodeURIComponent(elemId) : elemId);
             }
           }
+
+          var custom = elem[__this.config.restangularFields.custom];
+          if (custom) {
+            elemUrl += '/' + custom;
+          }
         }
         acum = acum.replace(/\/$/, '') + '/' + elemUrl;
         return __this.normalizeUrl(acum);
@@ -782,8 +788,11 @@ restangular.provider('Restangular', function() {
       var urlHandler = new config.urlCreatorFactory[config.urlCreator]();
       urlHandler.setConfig(config);
 
-      function restangularizeBase(parent, elem, route, reqParams, fromServer) {
+      function restangularizeBase(parent, elem, route, reqParams, fromServer, custom) {
         elem[config.restangularFields.route] = route;
+        if (custom) {
+          elem[config.restangularFields.custom] = custom;
+        }
         elem[config.restangularFields.getRestangularUrl] = _.bind(urlHandler.fetchUrl, urlHandler, elem);
         elem[config.restangularFields.getRequestedUrl] = _.bind(urlHandler.fetchRequestedUrl, urlHandler, elem);
         elem[config.restangularFields.addRestangularMethod] = _.bind(addRestangularMethodFunction, elem);
@@ -965,10 +974,10 @@ restangular.provider('Restangular', function() {
                 copiedElement, copiedElement[config.restangularFields.route], copiedElement[config.restangularFields.fromServer]);
       }
 
-      function restangularizeElem(parent, element, route, fromServer, collection, reqParams) {
+      function restangularizeElem(parent, element, route, fromServer, collection, reqParams, custom) {
         var elem = config.onBeforeElemRestangularized(element, false, route);
 
-        var localElem = restangularizeBase(parent, elem, route, reqParams, fromServer);
+        var localElem = restangularizeBase(parent, elem, route, reqParams, fromServer, custom);
 
         if (config.useCannonicalId) {
           localElem[config.restangularFields.cannonicalId] = config.getIdFromElem(localElem);
@@ -996,10 +1005,10 @@ restangular.provider('Restangular', function() {
         return config.transformElem(localElem, false, route, service, true);
       }
 
-      function restangularizeCollection(parent, element, route, fromServer, reqParams) {
+      function restangularizeCollection(parent, element, route, fromServer, reqParams, custom) {
         var elem = config.onBeforeElemRestangularized(element, true, route);
 
-        var localElem = restangularizeBase(parent, elem, route, reqParams, fromServer);
+        var localElem = restangularizeBase(parent, elem, route, reqParams, fromServer, custom);
         localElem[config.restangularFields.restangularCollection] = true;
         localElem[config.restangularFields.post] = _.bind(postFunction, localElem, null);
         localElem[config.restangularFields.remove] = _.bind(deleteFunction, localElem);
@@ -1113,7 +1122,8 @@ restangular.provider('Restangular', function() {
                 processedData,
                 what,
                 true,
-                fullParams
+                fullParams,
+                what
               ),
               filledArray
             );
@@ -1126,7 +1136,8 @@ restangular.provider('Restangular', function() {
                 processedData,
                 __this[config.restangularFields.route],
                 true,
-                fullParams
+                fullParams,
+                what
               ),
               filledArray
             );
@@ -1198,7 +1209,8 @@ restangular.provider('Restangular', function() {
                 route,
                 true,
                 null,
-                fullParams
+                fullParams,
+                what
               );
               resolvePromise(deferred, response, data, filledObject);
             } else {
@@ -1208,7 +1220,8 @@ restangular.provider('Restangular', function() {
                 __this[config.restangularFields.route],
                 true,
                 null,
-                fullParams
+                fullParams,
+                what
               );
 
               data[config.restangularFields.singleOne] = __this[config.restangularFields.singleOne];
